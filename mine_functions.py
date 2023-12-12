@@ -1,9 +1,9 @@
-import pygame, sys, random, json, win32gui
+import pygame, sys, random, json, win32gui, pyautogui, ctypes
 
 
 def create_minesweeper_grid(rows, cols, advanced=True):
 
-    num_mines = rows*cols*0.1
+    num_mines = rows*cols*0.15
 
     # Initialize an empty grid filled with zeros
     """advanced variable makes the grid get all number in the grid"""
@@ -70,12 +70,11 @@ def display_minesweeper_game_sequence(boards):
     board_index = 0
 
     # Define cell size and gap
-    CELL_SIZE = 30
+    CELL_SIZE = screen_height = (pyautogui.size().height)/(len(board)+10)
     SCALE_SIZE = (CELL_SIZE, CELL_SIZE)
-    GAP = 0
 
-    screen_width = len(board[0]) * (CELL_SIZE + GAP)
-    screen_height = len(board) * (CELL_SIZE + GAP)
+    screen_width = len(board[0]) * (CELL_SIZE)
+    screen_height = len(board) * (CELL_SIZE)
     screen = pygame.display.set_mode((screen_width, screen_height))
     pygame.display.set_caption("Minesweeper Playback")
 
@@ -121,13 +120,16 @@ def display_minesweeper_game_sequence(boards):
         for row in range(len(board)):
             for col in range(len(board[row])):
                 cell_value = board[row][col]
-                x = col * (CELL_SIZE + GAP)
-                y = row * (CELL_SIZE + GAP)
+                x = col * (CELL_SIZE)
+                y = row * (CELL_SIZE)
 
-                if cell_value == -1:
+                if cell_value == "c":
+                    screen.blit(concealed_image, (x, y))
+                elif cell_value == "f":
                     screen.blit(flag_image, (x, y))
-                elif cell_value == "c":
-                    screen.blit(concealed_image, (x, y))    
+                elif cell_value == -1:
+                    screen.blit(flag_image, (x, y))
+                
                 else:
                     if cell_value > 0:
                         number_image = number_images[cell_value - 1]
@@ -139,6 +141,7 @@ def display_minesweeper_game_sequence(boards):
         pygame.display.flip()
         clock.tick(10)  # Change the frame rate as needed
         board_index += 1
+        print(board_index)
         if board_index < len(boards):
             board = boards[board_index]
         else:
@@ -177,9 +180,83 @@ def json_data_handler(data, filename, mode="write"):
         print(f"Error: {e}")
         return None
 
-def solve_grid(current_grid, solved_grid):
-    pass
+def solve_grid(current_grid):
+    # Makes a default covered version of the grid
+    default_grid = switch_values(current_grid, "c")
+    
 
+
+# revealed_image = pygame.image.load("highres_images/Tile_Flat.png")
+# covered_image = pygame.image.load("highres_images/Tile_1.png")
+# bomb_image = pygame.image.load("highres_images/Skull.png")
+# number_images = [pygame.image.load(f"highres_images/Number_{i}.png") for i in range(1, 9)]
+
+def display_minesweeper_grid(grid, revealed_positions):
+    pygame.init()
+
+    # Get screen dimensions
+    user32 = ctypes.windll.user32
+    screen_width, screen_height = user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)
+
+    # Set up the display
+    screen = pygame.display.set_mode((screen_width, screen_height), pygame.FULLSCREEN)
+    pygame.display.set_caption("Minesweeper Grid")
+
+    # Minesweeper grid settings
+    grid_size = len(grid)
+    cell_size = min(screen_width // grid_size, screen_height // grid_size)
+
+    # Load images
+    revealed_image = pygame.image.load("revealed_cell.png")  # Replace with your revealed cell image
+    covered_image = pygame.image.load("covered_cell.png")  # Replace with your covered cell image
+    bomb_image = pygame.image.load("bomb.png")  # Replace with your bomb image
+    number_images = [pygame.image.load(f"number_{i}.png") for i in range(1, 9)]  # Replace with your number images
+
+    # Main game loop
+    running = True
+
+    # Iterator for revealed positions
+    revealed_iter = iter(revealed_positions)
+    current_revealed_position = next(revealed_iter, None)
+
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+
+        # Draw Minesweeper grid
+        screen.fill((255, 255, 255))
+
+        for row in range(grid_size):
+            for col in range(grid_size):
+                rect = pygame.Rect(col * cell_size, row * cell_size, cell_size, cell_size)
+
+                # Check if the cell is in the current revealed position
+                if (row, col) == current_revealed_position:
+                    if grid[row][col] == 0:
+                        screen.blit(revealed_image, rect)
+                    elif grid[row][col] == 9:  # Assuming 9 represents a bomb in the grid
+                        screen.blit(bomb_image, rect)
+                    else:
+                        screen.blit(number_images[grid[row][col] - 1], rect)
+                else:
+                    screen.blit(covered_image, rect)
+
+        # Update the display
+        pygame.display.flip()
+
+        # Delay between revealed positions
+        pygame.time.delay(1000)
+
+        # Get the next revealed position
+        current_revealed_position = next(revealed_iter, None)
+        if current_revealed_position is None:
+            # Restart the iterator when all positions are revealed
+            revealed_iter = iter(revealed_positions)
+            current_revealed_position = next(revealed_iter, None)
+
+    pygame.quit()
+    sys.exit()
 
 def display_time(start, end):
     time_elapsed = end - start

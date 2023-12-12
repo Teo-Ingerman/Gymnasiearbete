@@ -10,4 +10,6 @@ mf.json_data_handler([mf.create_minesweeper_grid(rows, columns) for _ in range(g
 
 
 
+# grids = mf.json_data_handler(None, "generated_grids", "read")
 
+# mf.display_minesweeper_game_sequence(grids)
