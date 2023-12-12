@@ -1,8 +1,6 @@
 import pygame, sys, random, json, win32gui
 
 
-
-
 def create_minesweeper_grid(rows, cols, num_mines, advanced=True):
     # Initialize an empty grid filled with zeros
     """advanced variable makes the grid get all number in the grid"""
@@ -147,14 +145,13 @@ def display_minesweeper_game_sequence(boards):
     pygame.quit()
     sys.exit()
 
-def replace_all(arr, value):
-    if isinstance(arr, list):
-        new_arr = []
-        for item in arr:
-            new_arr.append(replace_all(item, value))
-        return new_arr
-    else:
-        return value
+def switch_values(original_list, new_value):
+    # Base case: if the element is not a list, replace it with new_value
+    if not isinstance(original_list, list):
+        return new_value
+
+    # Recursively call switch_values for each element in the list
+    return [switch_values(element, new_value) for element in original_list]
 
 def json_data_handler(data, filename, mode="write"):
     # Add ".json" extension to the filename if it doesn't have one
@@ -179,3 +176,16 @@ def json_data_handler(data, filename, mode="write"):
 
 def solve_grid(current_grid, solved_grid):
     pass
+
+
+def display_time(start, end):
+    time_elapsed = end - start
+
+
+    if time_elapsed < 60:
+        return(f"{round(time_elapsed, 2)} s")
+
+    if time_elapsed > 60:
+        seconds = round(time_elapsed % 60, 2)
+        minutes = (time_elapsed - seconds)/60
+        return(f"{minutes} m {seconds} s")
