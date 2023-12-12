@@ -3,7 +3,7 @@ import pygame, sys, random, json, win32gui
 
 
 
-def create_minesweeper_grid(rows, cols, num_mines, advanced):
+def create_minesweeper_grid(rows, cols, num_mines, advanced=True):
     # Initialize an empty grid filled with zeros
     """advanced variable makes the grid get all number in the grid"""
     grid = [[0 for _ in range(cols)] for _ in range(rows)]
@@ -62,8 +62,6 @@ def create_minesweeper_grid(rows, cols, num_mines, advanced):
         grid = visual_list
 
     return grid
-
-
 
 def display_minesweeper_game_sequence(boards):
     pygame.init()
@@ -158,7 +156,6 @@ def replace_all(arr, value):
     else:
         return value
 
-
 def json_data_handler(data, filename, mode="write"):
     # Add ".json" extension to the filename if it doesn't have one
     if not filename.endswith(".json"):
@@ -179,3 +176,6 @@ def json_data_handler(data, filename, mode="write"):
     except Exception as e:
         print(f"Error: {e}")
         return None
+
+def solve_grid(current_grid, solved_grid):
+    pass
