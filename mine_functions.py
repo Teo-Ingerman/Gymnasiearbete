@@ -1,7 +1,10 @@
 import pygame, sys, random, json, win32gui
 
 
-def create_minesweeper_grid(rows, cols, num_mines, advanced=True):
+def create_minesweeper_grid(rows, cols, advanced=True):
+
+    num_mines = rows*cols*0.1
+
     # Initialize an empty grid filled with zeros
     """advanced variable makes the grid get all number in the grid"""
     grid = [[0 for _ in range(cols)] for _ in range(rows)]
