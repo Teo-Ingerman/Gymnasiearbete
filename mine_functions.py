@@ -3,7 +3,7 @@ import pygame, sys, random, json, win32gui, pyautogui, ctypes
 
 def create_minesweeper_grid(rows, cols, advanced=True):
 
-    num_mines = int(rows*cols*0.1)
+    num_mines = int(rows*cols*0.15)
 
     # Initialize an empty grid filled with zeros
     """advanced variable makes the grid get all number in the grid"""
@@ -256,10 +256,6 @@ def solve_grid(open_grid):
                 if mines_discovered == total_mines and value == "c":
                     squares_to_open.append(pos)
 
-
-
-
-
                 # if the square is covered or a bomb it skips it
                 if value == "c" or value == -1:
                     continue
@@ -274,16 +270,13 @@ def solve_grid(open_grid):
                     for position in surround_pos:
                         row, column = position
                         
-                        if closed_grid[row][column] != "c":
-                            continue
-                        
                         
                         squares_to_open.append(position)
 
                     continue
 
                 # removes the the covered squares if the amount of bombs is equal to the number
-                if value == surround_value.count("f"):
+                if value == surround_value.count(-1):
                     for index, value in enumerate(surround_value):
                         if value != "c":
                             continue
@@ -310,7 +303,7 @@ def solve_grid(open_grid):
         
         # removes all duplicates from the list
         # then opens all squares in the list
-        for pos in list(set(squares_to_open)):
+        for pos in list(dict.fromkeys(squares_to_open)):
             open_square(pos)
             reveal_sequence.append(pos)
 
@@ -341,7 +334,7 @@ def solve_grid(open_grid):
 # number_images = [pygame.image.load(f"highres_images/Number_{i}.png") for i in range(1, 9)]
 
 
-def display_minesweeper_grid(grid, revealed_positions):
+def display_minesweeper_grid(grid, reveal_sequence):
     pygame.init()
 
     # Set up the display
@@ -354,10 +347,10 @@ def display_minesweeper_grid(grid, revealed_positions):
     cell_size = min(screen_width // grid_size, screen_height // grid_size)
 
     # Load images
-    revealed_image = pygame.image.load("highres_images/Tile_Flat.png")
-    covered_image = pygame.image.load("highres_images/Tile_1.png")
-    bomb_image = pygame.image.load("highres_images/Skull.png")
-    number_images = [pygame.image.load(f"highres_images/Number_{i}.png") for i in range(1, 9)]
+    revealed_image = pygame.image.load("highres_images/Tile_Flat.png").convert_alpha()
+    covered_image = pygame.image.load("highres_images/Tile_1.png").convert_alpha()
+    bomb_image = pygame.image.load("highres_images/Skull.png").convert_alpha()
+    number_images = [pygame.image.load(f"highres_images/Number_{i}.png").convert_alpha() for i in range(1, 9)]
 
     # Scale images to match the cell size
     revealed_image = pygame.transform.scale(revealed_image, (cell_size, cell_size))
@@ -365,6 +358,8 @@ def display_minesweeper_grid(grid, revealed_positions):
     bomb_image = pygame.transform.scale(bomb_image, (cell_size, cell_size))
     number_images = [pygame.transform.scale(img, (cell_size, cell_size)) for img in number_images]
 
+    # Set background color
+    background_color = (0, 0, 0)
 
     # Main game loop
     running = True
@@ -374,10 +369,8 @@ def display_minesweeper_grid(grid, revealed_positions):
 
     clock = pygame.time.Clock()
 
-    # Iterator for revealed positions
-    revealed_iter = iter(revealed_positions)
-    current_revealed_position = next(revealed_iter, None)
-
+    # Iterate over the specified reveal sequence
+    reveal_iter = iter(reveal_sequence)
 
     while running:
         for event in pygame.event.get():
@@ -385,37 +378,36 @@ def display_minesweeper_grid(grid, revealed_positions):
                 running = False
 
         # Draw Minesweeper grid
-        screen.fill((0, 0, 0))
+        screen.fill(background_color)
 
         for row in range(grid_size):
             for col in range(grid_size):
                 rect = pygame.Rect(col * cell_size, row * cell_size, cell_size, cell_size)
 
                 # Check if the cell is in the current or previously revealed positions
-                if [row, col] in previously_revealed or [row, col] == current_revealed_position:
+                if [row, col] in previously_revealed:
                     if grid[row][col] == 0:
                         screen.blit(revealed_image, rect)
-                    elif grid[row][col] == -1:  # Assuming 9 represents a bomb in the grid
+                    elif grid[row][col] == -1:  # Assuming -1 represents a bomb in the grid
                         screen.blit(bomb_image, rect)
                     else:
                         screen.blit(number_images[grid[row][col] - 1], rect)
                 else:
+
                     screen.blit(covered_image, rect)
 
         # Update the display
         pygame.display.flip()
 
-        # Limit frames per second
-        clock.tick(2)  # Set your desired frame rate (frames per second)
-
-
         # Get the next revealed position
-        current_revealed_position = next(revealed_iter, None)
+        current_revealed_position = next(reveal_iter, None)
         if current_revealed_position is not None:
             # Add the current revealed position to the list of previously revealed
             previously_revealed.append(current_revealed_position)
 
-        
+        # Limit frames per second
+        clock.tick(40)  # Set your desired frame rate (frames per second)
+
     pygame.quit()
     sys.exit()
 
