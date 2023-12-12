@@ -3,7 +3,7 @@ import pygame, sys, random, json, win32gui, pyautogui, ctypes
 
 def create_minesweeper_grid(rows, cols, advanced=True):
 
-    num_mines = rows*cols*0.15
+    num_mines = int(rows*cols*0.1)
 
     # Initialize an empty grid filled with zeros
     """advanced variable makes the grid get all number in the grid"""
@@ -180,10 +180,159 @@ def json_data_handler(data, filename, mode="write"):
         print(f"Error: {e}")
         return None
 
-def solve_grid(current_grid):
+def get_surrounding_squares(grid, position, return_state="all"):
+        neighbors = []
+        neighbors_position =[]
+        row, col = position
+        # Define the possible offsets for all eight surrounding squares
+        offsets = [
+            (-1, 0), (1, 0), (0, -1), (0, 1),  # Up, down, left, right
+            (-1, -1), (-1, 1), (1, -1), (1, 1)  # Diagonal
+        ]
+
+        # Iterate over the offsets to get neighboring positions
+        for offset_row, offset_col in offsets:
+            neighbor_row = row + offset_row
+            neighbor_col = col + offset_col
+
+            # Check if the neighboring position is within the grid bounds
+            if 0 <= neighbor_row < len(grid) and 0 <= neighbor_col < len(grid[0]):
+                neighbors.append(grid[neighbor_row][neighbor_col])
+                neighbors_position.append((neighbor_row, neighbor_col))
+
+
+        if return_state == "all":
+            return neighbors, neighbors_position
+        
+        if return_state == "pos":
+            return neighbors_position
+
+        if return_state == "value":
+            return neighbors
+
+def solve_grid(open_grid):
     # Makes a default covered version of the grid
-    default_grid = switch_values(current_grid, "c")
+    closed_grid = switch_values(open_grid, "c")
+
+    # Calculating the total amount of mines
+    total_mines = 0
+
+    for row in open_grid:
+        total_mines += row.count(-1)
+
     
+    def open_square(pos):
+        closed_grid[pos[0]][pos[1]] = open_grid[pos[0]][pos[1]]
+    
+
+    # Choosing a valid starting square
+    while True:
+        start_pos = (random.randint(0, len(open_grid)-1), random.randint(0, len(open_grid[0])-1))
+        
+        if open_grid[start_pos[0]][start_pos[1]] != 0:
+            continue
+        open_square(start_pos)
+        break
+            
+    
+    # Starting the main loop
+    reveal_sequence = []
+    
+    running = True
+
+    while running:
+
+
+        squares_to_open = []
+        # keeping the mines discovered counted
+        mines_discovered = 0
+
+        for i, _ in enumerate(closed_grid):
+            for j, value in enumerate(closed_grid[i]):
+                pos = (i, j)
+
+
+                #  if all mines are discovered the remaining covered squares are safe
+                if mines_discovered == total_mines and value == "c":
+                    squares_to_open.append(pos)
+
+
+
+
+
+                # if the square is covered or a bomb it skips it
+                if value == "c" or value == -1:
+                    continue
+                
+                surround_value, surround_pos = get_surrounding_squares(closed_grid, pos)
+                
+                if surround_value.count("c") == 0:
+                    continue
+                
+                    
+                if value == 0:
+                    for position in surround_pos:
+                        row, column = position
+                        
+                        if closed_grid[row][column] != "c":
+                            continue
+                        
+                        
+                        squares_to_open.append(position)
+
+                    continue
+
+                # removes the the covered squares if the amount of bombs is equal to the number
+                if value == surround_value.count("f"):
+                    for index, value in enumerate(surround_value):
+                        if value != "c":
+                            continue
+                        
+                        squares_to_open.append(surround_pos[index])
+
+                    continue
+
+                # checks if if there are the same amount of uncovered squares and bombs as the number 
+                bomb_check = value - surround_value.count("c") - surround_value.count("f")
+                
+                if bomb_check == 0:
+                    mines_discovered += 1
+                    for index, value in enumerate(surround_value):
+                        if value != "c":
+                            continue
+                        
+                        squares_to_open.append(surround_pos[index])
+                        
+                    continue
+
+
+        
+        
+        # removes all duplicates from the list
+        # then opens all squares in the list
+        for pos in list(set(squares_to_open)):
+            open_square(pos)
+            reveal_sequence.append(pos)
+
+
+
+        # Checking if any squares are covered
+        covered_squares = 0
+        for row in closed_grid:
+            covered_squares += row.count("c")
+        
+        # this happems if the program is unable to solve the grid
+        if len(squares_to_open) == 0 and covered_squares != 0:
+            # print("nej")
+            return False
+        
+        # if all covered squares are revealed the program is not finished
+        if covered_squares != 0:
+            continue
+
+        running = False
+
+    return reveal_sequence
 
 
 # revealed_image = pygame.image.load("highres_images/Tile_Flat.png")
@@ -191,15 +340,13 @@ def solve_grid(current_grid):
 # bomb_image = pygame.image.load("highres_images/Skull.png")
 # number_images = [pygame.image.load(f"highres_images/Number_{i}.png") for i in range(1, 9)]
 
+
 def display_minesweeper_grid(grid, revealed_positions):
     pygame.init()
 
-    # Get screen dimensions
-    user32 = ctypes.windll.user32
-    screen_width, screen_height = user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)
-
     # Set up the display
-    screen = pygame.display.set_mode((screen_width, screen_height), pygame.FULLSCREEN)
+    screen_width, screen_height = 1000, 1000  # Set your desired window dimensions
+    screen = pygame.display.set_mode((screen_width, screen_height))
     pygame.display.set_caption("Minesweeper Grid")
 
     # Minesweeper grid settings
@@ -207,17 +354,30 @@ def display_minesweeper_grid(grid, revealed_positions):
     cell_size = min(screen_width // grid_size, screen_height // grid_size)
 
     # Load images
-    revealed_image = pygame.image.load("revealed_cell.png")  # Replace with your revealed cell image
-    covered_image = pygame.image.load("covered_cell.png")  # Replace with your covered cell image
-    bomb_image = pygame.image.load("bomb.png")  # Replace with your bomb image
-    number_images = [pygame.image.load(f"number_{i}.png") for i in range(1, 9)]  # Replace with your number images
+    revealed_image = pygame.image.load("highres_images/Tile_Flat.png")
+    covered_image = pygame.image.load("highres_images/Tile_1.png")
+    bomb_image = pygame.image.load("highres_images/Skull.png")
+    number_images = [pygame.image.load(f"highres_images/Number_{i}.png") for i in range(1, 9)]
+
+    # Scale images to match the cell size
+    revealed_image = pygame.transform.scale(revealed_image, (cell_size, cell_size))
+    covered_image = pygame.transform.scale(covered_image, (cell_size, cell_size))
+    bomb_image = pygame.transform.scale(bomb_image, (cell_size, cell_size))
+    number_images = [pygame.transform.scale(img, (cell_size, cell_size)) for img in number_images]
+
 
     # Main game loop
     running = True
 
+    # List to store previously revealed positions
+    previously_revealed = []
+
+    clock = pygame.time.Clock()
+
     # Iterator for revealed positions
     revealed_iter = iter(revealed_positions)
     current_revealed_position = next(revealed_iter, None)
+
 
     while running:
         for event in pygame.event.get():
@@ -225,17 +385,17 @@ def display_minesweeper_grid(grid, revealed_positions):
                 running = False
 
         # Draw Minesweeper grid
-        screen.fill((255, 255, 255))
+        screen.fill((0, 0, 0))
 
         for row in range(grid_size):
             for col in range(grid_size):
                 rect = pygame.Rect(col * cell_size, row * cell_size, cell_size, cell_size)
 
-                # Check if the cell is in the current revealed position
-                if (row, col) == current_revealed_position:
+                # Check if the cell is in the current or previously revealed positions
+                if [row, col] in previously_revealed or [row, col] == current_revealed_position:
                     if grid[row][col] == 0:
                         screen.blit(revealed_image, rect)
-                    elif grid[row][col] == 9:  # Assuming 9 represents a bomb in the grid
+                    elif grid[row][col] == -1:  # Assuming 9 represents a bomb in the grid
                         screen.blit(bomb_image, rect)
                     else:
                         screen.blit(number_images[grid[row][col] - 1], rect)
@@ -245,16 +405,17 @@ def display_minesweeper_grid(grid, revealed_positions):
         # Update the display
         pygame.display.flip()
 
-        # Delay between revealed positions
-        pygame.time.delay(1000)
+        # Limit frames per second
+        clock.tick(2)  # Set your desired frame rate (frames per second)
+
 
         # Get the next revealed position
         current_revealed_position = next(revealed_iter, None)
-        if current_revealed_position is None:
-            # Restart the iterator when all positions are revealed
-            revealed_iter = iter(revealed_positions)
-            current_revealed_position = next(revealed_iter, None)
+        if current_revealed_position is not None:
+            # Add the current revealed position to the list of previously revealed
+            previously_revealed.append(current_revealed_position)
 
+        
     pygame.quit()
     sys.exit()
 

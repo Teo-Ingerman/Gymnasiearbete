@@ -20,7 +20,6 @@ if __name__ == "__main__":
 
         solve_squence = mf.solve_grid(grid)
 
-
         # Checking if grid gets solved, if not function returns None
 
         if type(solve_squence) == list:
@@ -29,8 +28,8 @@ if __name__ == "__main__":
             solved_grids.append((grid, solve_squence))
 
 
-
-    mf.json_data_handler(solved_grids, )
+    # saving the solved grids to a json file
+    mf.json_data_handler(solved_grids, "finished_grids")
 
     # displays the time
     end = time.time()
