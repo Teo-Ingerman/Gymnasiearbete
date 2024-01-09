@@ -5,6 +5,19 @@ combo = mf.json_data_handler(None, "finished_grids", "read")
 
 
 grid, sequence = combo[0]
+
+
+# grid_array = mf.json_data_handler(None, "C#_code/minesweeper_grid", "read")
+
+# for row in grid_array:
+#     for col in row:
+#         if col == -1:
+#             print(f"X ", end="")
+#             continue
+#         print(f"{col} ", end="")
+#     print("")
+
+
 # print(sequence)
 
 # def find_missing_values(matrix):
@@ -23,4 +36,4 @@ grid, sequence = combo[0]
 # print(find_missing_values(sequence))
 
 
-mf.display_minesweeper_grid(grid, sequence)
+# mf.display_minesweeper_grid(grid, sequence)

@@ -420,5 +420,5 @@ def display_time(start, end):
 
     if time_elapsed > 60:
         seconds = round(time_elapsed % 60, 2)
-        minutes = (time_elapsed - seconds)/60
+        minutes = int((time_elapsed - seconds)/60)
         return(f"{minutes} m {seconds} s")

@@ -8,6 +8,8 @@ if __name__ == "__main__":
     # starts the time chekcer
     start = time.time()
 
+    # grids completed
+    completed = 0
     
     # Loads the generated grids 
     generated_grids = mf.json_data_handler(None, "generated_grids", "read")
@@ -17,7 +19,7 @@ if __name__ == "__main__":
     solved_grids = []
 
     for grid in generated_grids:
-
+        
         solve_squence = mf.solve_grid(grid)
 
         # Checking if grid gets solved, if not function returns None
@@ -26,12 +28,14 @@ if __name__ == "__main__":
 
             # saves the solved grid and the sequence to solve it as a tuple
             solved_grids.append((grid, solve_squence))
-
+            completed += 1
 
     # saving the solved grids to a json file
     mf.json_data_handler(solved_grids, "finished_grids")
 
     # displays the time
     end = time.time()
+    print(f"Completed: {completed}/{len(generated_grids)}")
     print(mf.display_time(start, end))
+    
 

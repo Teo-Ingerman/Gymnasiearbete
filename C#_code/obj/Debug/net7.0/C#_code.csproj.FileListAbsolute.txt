@@ -1,0 +1,14 @@
+C:\Users\Teo\Documents\programming_files\Gymnasiearbete\C#_code\bin\Debug\net7.0\C#_code.exe
+C:\Users\Teo\Documents\programming_files\Gymnasiearbete\C#_code\bin\Debug\net7.0\C#_code.deps.json
+C:\Users\Teo\Documents\programming_files\Gymnasiearbete\C#_code\bin\Debug\net7.0\C#_code.runtimeconfig.json
+C:\Users\Teo\Documents\programming_files\Gymnasiearbete\C#_code\bin\Debug\net7.0\C#_code.dll
+C:\Users\Teo\Documents\programming_files\Gymnasiearbete\C#_code\bin\Debug\net7.0\C#_code.pdb
+C:\Users\Teo\Documents\programming_files\Gymnasiearbete\C#_code\obj\Debug\net7.0\C#_code.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Teo\Documents\programming_files\Gymnasiearbete\C#_code\obj\Debug\net7.0\C#_code.AssemblyInfoInputs.cache
+C:\Users\Teo\Documents\programming_files\Gymnasiearbete\C#_code\obj\Debug\net7.0\C#_code.AssemblyInfo.cs
+C:\Users\Teo\Documents\programming_files\Gymnasiearbete\C#_code\obj\Debug\net7.0\C#_code.csproj.CoreCompileInputs.cache
+C:\Users\Teo\Documents\programming_files\Gymnasiearbete\C#_code\obj\Debug\net7.0\C#_code.dll
+C:\Users\Teo\Documents\programming_files\Gymnasiearbete\C#_code\obj\Debug\net7.0\refint\C#_code.dll
+C:\Users\Teo\Documents\programming_files\Gymnasiearbete\C#_code\obj\Debug\net7.0\C#_code.pdb
+C:\Users\Teo\Documents\programming_files\Gymnasiearbete\C#_code\obj\Debug\net7.0\C#_code.genruntimeconfig.cache
+C:\Users\Teo\Documents\programming_files\Gymnasiearbete\C#_code\obj\Debug\net7.0\ref\C#_code.dll
