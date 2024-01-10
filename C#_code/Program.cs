@@ -1,36 +1,239 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Text.Json;
-using System.Text.Json.Serialization;
+using System.Linq;
 
 class Minesweeper
 {
+    // Define a class to represent a move (opened square)
+    class Move
+    {
+        public int Row { get; set; }
+        public int Col { get; set; }
+
+        public Move(int row, int col)
+        {
+            Row = row;
+            Col = col;
+        }
+    }
+    // Custom equality comparer for List<int>
+    public class ListComparer : IEqualityComparer<List<int>?>
+    {
+        public bool Equals(List<int>? x, List<int>? y)
+        {
+            return x?.SequenceEqual(y ?? Enumerable.Empty<int>()) ?? (y == null);
+        }
+
+        public int GetHashCode(List<int>? obj)
+        {
+            if (obj == null)
+            {
+                return 0;
+            }
+
+            int hash = 17;
+            foreach (int item in obj)
+            {
+                hash = hash * 31 + item.GetHashCode();
+            }
+            return hash;
+        }
+    }
     static void Main()
     {
-        // Get user input for the height and length of the Minesweeper grid
-        int rows = GetUserInput("Enter the height of the Minesweeper grid: ");
-        int cols = GetUserInput("Enter the length of the Minesweeper grid: ");
 
-        // Create the Minesweeper grid
-        int[,] minesweeper_grid = new int[rows, cols];
 
-        // Initialize the grid with empty cells
-        InitializeGrid(minesweeper_grid);
+        // // Get user input for the height and length of the Minesweeper grid
+        // int rows = GetUserInput("Enter the height of the Minesweeper grid: ");
+        // int cols = GetUserInput("Enter the length of the Minesweeper grid: ");
 
-        // Place mines in approximately 15% of the grid squares
-        PlaceMines(minesweeper_grid, 0.15);
+        // // Create the Minesweeper grid
+        // int[,] minesweeper_grid = new int[rows, cols];
 
-        // Calculate the numbers for each cell
-        CalculateNumbers(minesweeper_grid);
+        // // Initialize the grid with empty cells
+        // InitializeGrid(minesweeper_grid);
 
-        // Display the initial state of the Minesweeper grid
-        DisplayGrid(minesweeper_grid);
+        // // Place mines in approximately 15% of the grid squares
+        // PlaceMines(minesweeper_grid, 0.15);
+
+        // // Calculate the numbers for each cell
+        // CalculateNumbers(minesweeper_grid);
+
+        // // Display the initial state of the Minesweeper grid
+        // DisplayGrid(minesweeper_grid);
 
         // Save the Minesweeper grid to a JSON file
-        SaveGridToJson(minesweeper_grid, "minesweeper_grid.json");
+        // SaveGridsToJson(minesweeper_grid, "minesweeper_grid.json");
 
-        // Your Minesweeper game logic goes here...
+        // Load the Minesweeper grid from the JSON file
+        List<int[,]> loadedGrids = LoadGridsFromJson("../generated_grids.json");
 
-        Console.ReadLine();
+        // Display the loaded state of the Minesweeper grids
+        Console.WriteLine("Loaded Minesweeper Grids:");
+        foreach (var grid in loadedGrids)
+        {
+            DisplayGrid(grid);
+        }
+
+        // Solve and update each grid
+        List<object[]> solvedGridsAndMoves = new List<object[]>();
+
+        foreach (var grid in loadedGrids)
+        {
+            List<List<int>> moves = GridSolver(grid);
+
+            // Create an array with the grid and its moves
+            object[] gridAndMoves = new object[] { ConvertToJaggedArray(grid), moves };
+
+            // Add the array to the list
+            solvedGridsAndMoves.Add(gridAndMoves);
+
+            // Update the grid (replace with your actual solver logic)
+            int[,] solvedGrid = UpdateGrid(grid, moves);
+
+            // solvedGrids.Add(solvedGrid);
+        }
+
+        // Save the updated grids and move sequences to a new JSON file
+        SaveGridsAndMovesToJson(solvedGridsAndMoves, "../finished_grids.json");
+    }
+
+    // Function to remove duplicate positions from a list of moves
+    static List<List<int>> RemoveDuplicatePositions(List<List<int>> moves)
+    {
+        return moves.Distinct(new ListComparer()).ToList();
+    }
+
+    // Function to save a list of Minesweeper grids and their move sequences to a JSON file using System.Text.Json
+    static void SaveGridsAndMovesToJson(List<object[]> gridsAndMoves, string fileName)
+    {
+        string json = JsonSerializer.Serialize(gridsAndMoves, new JsonSerializerOptions { WriteIndented = true });
+        File.WriteAllText(fileName, json);
+        Console.WriteLine($"Grids and moves saved to {fileName}");
+    }
+
+    // Function to solve the Minesweeper grid and return a list of moves (row and col positions)
+    static List<List<int>> GridSolver(int[,] grid)
+    {
+        List<List<int>> moves = new List<List<int>>();
+
+        for (int i = 0; i < grid.GetLength(0); i++)
+        {
+            for (int j = 0; j < grid.GetLength(1); j++)
+            {
+                if (grid[i, j] != -1 && grid[i, j] != 9)
+                {
+                    // Add the position (row and col) to the list of moves
+                    moves.Add(new List<int> { i, j });
+                    
+                    if (grid[i, j] == 0)
+                    {
+                        // If the square is empty, include surrounding squares in the moves list
+                        List<List<int>> surroundingSquares = GetSurroundingSquares(grid, i, j)
+                            .Select(tuple => new List<int> { tuple.Item1, tuple.Item2 })
+                            .ToList();
+                        moves.AddRange(surroundingSquares);
+                        
+
+                    }
+                }
+
+
+
+                
+            }
+        }
+
+
+        List<List<int>> uniqueMoves = RemoveDuplicatePositions(moves);
+
+        return uniqueMoves;
+
+
+    }
+
+    // Function to get the 8 surrounding squares of a given position on the grid
+    static List<(int, int)> GetSurroundingSquares(int[,] grid, int row, int col)
+    {
+        List<(int, int)> surroundingSquares = new List<(int, int)>();
+
+        for (int i = -1; i <= 1; i++)
+        {
+            for (int j = -1; j <= 1; j++)
+            {
+                int newRow = row + i;
+                int newCol = col + j;
+
+                // Ensure the surrounding square is within the grid bounds
+                if (newRow >= 0 && newRow < grid.GetLength(0) &&
+                    newCol >= 0 && newCol < grid.GetLength(1))
+                {
+                    // Exclude the center square itself
+                    if (!(i == 0 && j == 0))
+                    {
+                        surroundingSquares.Add((newRow, newCol));
+                    }
+                }
+            }
+        }
+
+        return surroundingSquares;
+    }
+    // Function to iteratively open adjacent safe squares and update the move sequence
+    static void OpenAdjacentSquaresIterative(int[,] grid, List<List<int>> moves, int startRow, int startCol)
+    {
+        int rows = grid.GetLength(0);
+        int cols = grid.GetLength(1);
+
+        Queue<(int, int)> queue = new Queue<(int, int)>();
+        queue.Enqueue((startRow, startCol));
+
+        while (queue.Count > 0)
+        {
+            var (row, col) = queue.Dequeue();
+
+            for (int i = -1; i <= 1; i++)
+            {
+                for (int j = -1; j <= 1; j++)
+                {
+                    int newRow = row + i;
+                    int newCol = col + j;
+
+                    if (newRow >= 0 && newRow < rows && newCol >= 0 && newCol < cols &&
+                        grid[newRow, newCol] != -1 && grid[newRow, newCol] != 9)
+                    {
+                        // Add the position (row and col) to the list of moves
+                        moves.Add(new List<int> { newRow, newCol });
+
+                        if (grid[newRow, newCol] == 0)
+                        {
+                            // If the square is empty, enqueue it for further exploration
+                            queue.Enqueue((newRow, newCol));
+
+                            // Mark the square as opened
+                            grid[newRow, newCol] = 9;
+                        }
+                        else
+                        {
+                            // Mark the square as opened
+                            grid[newRow, newCol] = 9;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
+
+     // Function to update the Minesweeper grid based on the list of moves
+    static int[,] UpdateGrid(int[,] grid, List<List<int>> moves)
+    {
+        // Implement your update logic here
+        // For demonstration purposes, this function doesn't modify the grid
+        return grid;
     }
 
     // Function to create a copy of the grid with all squares set to 9
@@ -195,18 +398,26 @@ class Minesweeper
 
     // Function to get user input for the height and length of the grid
     static int GetUserInput(string prompt)
-    {
-        Console.Write(prompt);
-        return int.Parse(Console.ReadLine());
-    }
+{
+    Console.Write(prompt);
+    return int.Parse(Console.ReadLine()!);
+}
 
-    // Function to save the Minesweeper grid to a JSON file using System.Text.Json
-    static void SaveGridToJson(int[,] grid, string fileName)
+    // Function to save a list of Minesweeper grids to a JSON file using System.Text.Json
+    // Function to save a list of Minesweeper grids to a JSON file using System.Text.Json
+    static void SaveGridsToJson(List<int[,]> grids, string fileName)
     {
-        int[][] jaggedArray = ConvertToJaggedArray(grid);
-        string json = JsonSerializer.Serialize(jaggedArray, new JsonSerializerOptions { WriteIndented = true });
-        System.IO.File.WriteAllText(fileName, json);
-        Console.WriteLine($"Grid saved to {fileName}");
+        List<int[][]> listOfJaggedArrays = new List<int[][]>();
+
+        foreach (var grid in grids)
+        {
+            int[][] jaggedArray = ConvertToJaggedArray(grid);
+            listOfJaggedArrays.Add(jaggedArray);
+        }
+
+        string json = JsonSerializer.Serialize(listOfJaggedArrays, new JsonSerializerOptions { WriteIndented = true });
+        File.WriteAllText(fileName, json);
+        Console.WriteLine($"Grids saved to {fileName}");
     }
 
     // Function to convert a 2D array to a jagged array
@@ -227,5 +438,43 @@ class Minesweeper
         }
 
         return jaggedArray;
+    }
+
+    // Function to load Minesweeper grids from a JSON file using System.Text.Json
+    static List<int[,]> LoadGridsFromJson(string fileName)
+    {
+        if (File.Exists(fileName))
+        {
+            string json = File.ReadAllText(fileName);
+            List<int[][]> listOfJaggedArrays = JsonSerializer.Deserialize<List<int[][]>>(json)!;
+
+            List<int[,]> listOfGrids = new List<int[,]>();
+
+            foreach (var jaggedArray in listOfJaggedArrays!)
+            {
+                int rows = jaggedArray.Length;
+                int cols = jaggedArray[0].Length;
+
+                int[,] grid = new int[rows, cols];
+
+                for (int i = 0; i < rows; i++)
+                {
+                    for (int j = 0; j < cols; j++)
+                    {
+                        grid[i, j] = jaggedArray[i][j];
+                    }
+                }
+
+                listOfGrids.Add(grid);
+            }
+
+            Console.WriteLine($"Grids loaded from {fileName}");
+            return listOfGrids;
+        }
+        else
+        {
+            Console.WriteLine($"File '{fileName}' not found. Creating an empty list.");
+            return new List<int[,]>();
+        }
     }
 }

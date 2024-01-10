@@ -390,6 +390,8 @@ def display_minesweeper_grid(grid, reveal_sequence):
                         screen.blit(revealed_image, rect)
                     elif grid[row][col] == -1:  # Assuming -1 represents a bomb in the grid
                         screen.blit(bomb_image, rect)
+                    elif grid[row][col] == 9:
+                        screen.blit(covered_image, rect)
                     else:
                         screen.blit(number_images[grid[row][col] - 1], rect)
                 else:
@@ -406,7 +408,7 @@ def display_minesweeper_grid(grid, reveal_sequence):
             previously_revealed.append(current_revealed_position)
 
         # Limit frames per second
-        clock.tick(40)  # Set your desired frame rate (frames per second)
+        clock.tick(20)  # Set your desired frame rate (frames per second)
 
     pygame.quit()
     sys.exit()

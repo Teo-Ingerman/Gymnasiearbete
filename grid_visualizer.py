@@ -36,4 +36,4 @@ grid, sequence = combo[0]
 # print(find_missing_values(sequence))
 
 
-# mf.display_minesweeper_grid(grid, sequence)
+mf.display_minesweeper_grid(grid, sequence)
