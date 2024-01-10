@@ -97,6 +97,7 @@ class Minesweeper
         }
 
         // Save the updated grids and move sequences to a new JSON file
+
         SaveGridsAndMovesToJson(solvedGridsAndMoves, "../finished_grids.json");
     }
 
@@ -149,11 +150,28 @@ class Minesweeper
 
         List<List<int>> uniqueMoves = RemoveDuplicatePositions(moves);
 
+        // ListReplacer(uniqueMoves, 0, -1);
+
         return uniqueMoves;
 
 
     }
 
+
+    // Function to replace specified values in the moves list
+    static void ListReplacer(List<List<int>> moves, int oldValue, int newValue)
+    {
+        for (int i = 0; i < moves.Count; i++)
+        {
+            for (int j = 0; j < moves[i].Count; j++)
+            {
+                if (moves[i][j] == oldValue)
+                {
+                    moves[i][j] = newValue;
+                }
+            }
+        }
+    }
     // Function to get the 8 surrounding squares of a given position on the grid
     static List<(int, int)> GetSurroundingSquares(int[,] grid, int row, int col)
     {
